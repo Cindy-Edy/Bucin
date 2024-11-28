@@ -3359,6 +3359,7 @@
                                 }
                               }, 100);
                             </script>
+                            
                             <p></p>
                             <div id="sebenernya" class="dlBox">
                               <span class="fT"><img src="img/3.png" /></span>
@@ -3839,64 +3840,98 @@
               </div>
 
               <script>
-                const scriptURL = 'https://script.google.com/macros/s/AKfycbxUzzMjKodYBNqBz8VUrrKqtavNT_2Xnxc8HiZr8SAdWJ2ShIhaLrvJaB4MhfYYSyFi/exec'; // Ganti dengan URL Apps Script Anda
-
-                async function loadData() {
+                   const scriptURL = 'https://script.google.com/macros/s/AKfycbxUzzMjKodYBNqBz8VUrrKqtavNT_2Xnxc8HiZr8SAdWJ2ShIhaLrvJaB4MhfYYSyFi/exec'; // Ganti dengan URL Apps Script Anda
+  
+                   let cachedData = null;
+  
+                    async function loadData() {
+               try {
                   const response = await fetch(scriptURL);
                   const data = await response.json();
-
-                  // Update Like Counts
-                  document.getElementById('like-heart').innerText = data.likes.heart;
-                  document.getElementById('like-laugh').innerText = data.likes.laugh;
-                  document.getElementById('like-wow').innerText = data.likes.wow;
-                  document.getElementById('like-sad').innerText = data.likes.sad;
-                  document.getElementById('like-angry').innerText = data.likes.angry;
-
-                  // Display Comments
-                  const commentList = document.getElementById('commentList');
-                  commentList.innerHTML = '<h2>Komentar</h2>';
+  
+                 // Cek apakah data baru berbeda dari data cache sebelumnya
+                   if (JSON.stringify(data) !== JSON.stringify(cachedData)) {
+                   cachedData = data;
+  
+                 // Update Like Counts
+                   document.getElementById('like-heart').innerText = data.likes.heart;
+                   document.getElementById('like-laugh').innerText = data.likes.laugh;
+                   document.getElementById('like-wow').innerText = data.likes.wow;
+                   document.getElementById('like-sad').innerText = data.likes.sad;
+                   document.getElementById('like-angry').innerText = data.likes.angry;
+  
+                 // Display Comments
+                   const commentList = document.getElementById('commentList');
+                   commentList.innerHTML = '<h2>Komentar</h2>';
                   data.comments.forEach(comment => {
+                    const formattedTime = formatTime(comment.time);
                     commentList.innerHTML += `
-                                          <div class="comment-item">
-                                            <p><strong>${comment.name}</strong></p>
-                                            <p>${comment.comment}</p>
-                                            <p class="comment-time">${comment.time}</p>
-                                          </div>`;
+                    <div class="comment-item">
+                      <div class="comment-header">
+                       <span class="comment-icon">👤</span>
+                       <strong>${comment.name}</strong>
+                     </div>
+                    <p>${comment.comment}</p>
+                  <p class="comment-time">${formattedTime}</p>
+                  </div>`;
                   });
-                }
-
-                // Submit Comment
-                document.getElementById('commentForm').addEventListener('submit', async (e) => {
-                  e.preventDefault();
-                  const name = document.getElementById('name').value.trim();
-                  const comment = document.getElementById('comment').value.trim();
-
-                  if (name && comment) {
-                    await fetch(scriptURL, {
-                      method: 'POST',
-                      body: new URLSearchParams({ name, comment }),
-                    });
-                    Swal.fire('Berhasil!', 'Komentar kamu berhasil dikirim.', 'success');
-                    document.getElementById('commentForm').reset();
-                    loadData();
                   }
-                });
-
-                // Handle Emoji Click
-                document.getElementById('emojiContainer').addEventListener('click', async (e) => {
-                  if (e.target.classList.contains('emoji')) {
-                    const reaction = e.target.dataset.reaction;
-                    await fetch(scriptURL, {
-                      method: 'POST',
-                      body: new URLSearchParams({ reaction }),
-                    });
-                    loadData();
-                  }
-                });
-
-                loadData();
-              </script>
-
+               } catch (error) {
+                 console.error("Gagal memuat data:", error);
+               }
+            }
+  
+            function formatTime(timestamp) {
+              const now = new Date();
+              const commentTime = new Date(timestamp);
+              const diffMs = now - commentTime;
+  
+              const diffMinutes = Math.floor(diffMs / 60000);
+              const diffHours = Math.floor(diffMs / 3600000);
+              const diffDays = Math.floor(diffMs / 86400000);
+  
+              if (diffMinutes < 1) return 'Baru saja';
+              if (diffMinutes < 60) return `${diffMinutes} menit yang lalu`;
+              if (diffHours < 24) return `${diffHours} jam yang lalu`;
+              if (diffDays === 1) return 'Kemarin';
+              return `${diffDays} hari yang lalu`;
+            }
+  
+           // Submit Comment
+             document.getElementById('commentForm').addEventListener('submit', async (e) => {
+              e.preventDefault();
+             const name = document.getElementById('name').value.trim();
+             const comment = document.getElementById('comment').value.trim();
+  
+           if (name && comment) {
+               await fetch(scriptURL, {
+               method: 'POST',
+               body: new URLSearchParams({ name, comment }),
+             });
+              Swal.fire('Berhasil!', 'Komentar kamu berhasil dikirim.', 'success');
+              document.getElementById('commentForm').reset();
+            loadData();
+           }
+          });
+  
+           // Handle Emoji Click
+             document.getElementById('emojiContainer').addEventListener('click', async (e) => {
+              if (e.target.classList.contains('emoji')) {
+               const reaction = e.target.dataset.reaction;
+                 await fetch(scriptURL, {
+                 method: 'POST',
+                body: new URLSearchParams({ reaction }),
+               });
+              loadData();
+             }
+           });
+  
+           // Muat ulang data setiap 1 detik
+             setInterval(loadData, 1000);
+  
+           // Muat data pertama kali
+             loadData();
+             </script>
               </aside>
             </div>
           </div>
